@@ -7,7 +7,7 @@ on:
         required: false
         default: prerelease
   push:
-    branches: [ main, feature/* ]
+    branches: [ main, feature/*, fix/* ]
 
 concurrency:
   group: ${{ github.workflow }}${{ github.event.pull_request.number || github.ref }}
