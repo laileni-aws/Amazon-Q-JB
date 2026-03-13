@@ -16,6 +16,7 @@ jobs:
         ideProfileName: [ "2025.1", "2025.2", "2025.3" ]
     env:
       CI: true
+      LOCAL_ENV_RUN: true
 
     steps:
       - uses: actions/checkout@v4
@@ -27,11 +28,27 @@ jobs:
           distribution: 'corretto'
           cache: 'gradle'
 
+      - name: Configure Gradle properties
+        run: |
+          mkdir -p ~/.gradle
+          cat >> ~/.gradle/gradle.properties <<EOF
+          org.gradle.jvmargs=-Xmx4g
+          kotlin.daemon.jvmargs=-Xmx4g
+          EOF
+
+      - name: Install git-secrets
+        run: |
+          git clone https://github.com/awslabs/git-secrets.git /tmp/git-secrets
+          cd /tmp/git-secrets && sudo make install
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Run tests
-        run: ./gradlew -PideProfileName=${{ matrix.ideProfileName }} check coverageReport --info --console plain --continue
+        run: |
+          Xvfb :99 -screen 0 1920x1080x24 &
+          export DISPLAY=:99
+          ./gradlew -PideProfileName=${{ matrix.ideProfileName }} check coverageReport --info --stacktrace --console plain --continue
 
       - name: Build plugin
         if: success()

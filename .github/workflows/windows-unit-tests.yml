@@ -16,6 +16,7 @@ jobs:
         ideProfileName: [ "2025.1", "2025.2", "2025.3" ]
     env:
       CI: true
+      LOCAL_ENV_RUN: true
 
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +28,17 @@ jobs:
           distribution: 'corretto'
           cache: 'gradle'
 
+      - name: Configure Gradle properties
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.gradle" | Out-Null
+          @"
+          org.gradle.jvmargs=-Xmx4g
+          kotlin.daemon.jvmargs=-Xmx4g
+          "@ | Add-Content -Path "$env:USERPROFILE\.gradle\gradle.properties"
+
       - name: Run tests
-        run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" check coverageReport --info --console plain --continue
+        run: ./gradlew -PideProfileName="${{ matrix.ideProfileName }}" coverageReport --info --console plain
 
       - name: Collect test artifacts
         if: always()
