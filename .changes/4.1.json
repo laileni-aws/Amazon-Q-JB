@@ -1,0 +1,14 @@
+{
+  "date" : "2026-04-09",
+  "version" : "4.1",
+  "entries" : [ {
+    "type" : "feature",
+    "description" : "Add support for Jetbrains 2026.1 stable release"
+  }, {
+    "type" : "bugfix",
+    "description" : "Chat panel unresponsive when users open up a large repo"
+  }, {
+    "type" : "removal",
+    "description" : "Internal infrastructure update: repository separation and architectural migration. No user-facing changes or breaking API modifications."
+  } ]
+}

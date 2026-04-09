@@ -1,3 +1,8 @@
+# _4.1_ (2026-04-09)
+- **(Feature)** Add support for Jetbrains 2026.1 stable release
+- **(Bug Fix)** Chat panel unresponsive when users open up a large repo
+- **(Removal)** Internal infrastructure update: repository separation and architectural migration. No user-facing changes or breaking API modifications.
+
 # _4.0_ (2026-03-20)
 
 # _3.106_ (2026-03-13)
