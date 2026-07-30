@@ -41,7 +41,6 @@ import software.aws.toolkits.jetbrains.services.amazonq.auth.AuthNeededState
 import software.aws.toolkits.jetbrains.services.amazonq.messages.MessagePublisher
 import software.aws.toolkits.jetbrains.services.amazonq.onboarding.OnboardingPageInteraction
 import software.aws.toolkits.jetbrains.services.amazonq.onboarding.OnboardingPageInteractionType
-import software.aws.toolkits.jetbrains.services.amazonq.project.RelevantDocument
 import software.aws.toolkits.jetbrains.services.codewhisperer.settings.CodeWhispererConfigurable
 import software.aws.toolkits.jetbrains.services.cwc.InboundAppMessagesHandler
 import software.aws.toolkits.jetbrains.services.cwc.clients.chat.exceptions.ChatApiException
@@ -116,22 +115,15 @@ class ChatController private constructor(
     }
 
     override suspend fun processPromptChatMessage(message: IncomingCwcMessage.ChatPrompt) {
-        val prompt = message.chatMessage
-        val queryResult: List<RelevantDocument> = emptyList()
         val triggerId = UUID.randomUUID().toString()
-        val shouldAddIndexInProgressMessage = false
-        val shouldUseWorkspaceContext = false
 
         handleChat(
             tabId = message.tabId,
             triggerId = triggerId,
-            message = prompt,
+            message = message.chatMessage,
             activeFileContext = contextExtractor.extractContextForTrigger(ExtractionTriggerType.ChatMessage),
             userIntent = intentRecognizer.getUserIntentFromPromptChatMessage(message.chatMessage),
             TriggerType.Click,
-            projectContextQueryResult = queryResult,
-            shouldAddIndexInProgressMessage = shouldAddIndexInProgressMessage,
-            shouldUseWorkspaceContext = shouldUseWorkspaceContext
         )
     }
 
@@ -160,7 +152,6 @@ class ChatController private constructor(
             activeFileContext = fileContext,
             userIntent = intentRecognizer.getUserIntentFromFollowupType(message.followUp.type),
             TriggerType.Click,
-            projectContextQueryResult = emptyList()
         )
 
         telemetryHelper.recordInteractWithMessage(message)
@@ -252,7 +243,6 @@ class ChatController private constructor(
             activeFileContext = context,
             userIntent = intentRecognizer.getUserIntentFromOnboardingPageInteraction(message),
             triggerType = TriggerType.Click, // todo trigger type,
-            projectContextQueryResult = emptyList()
         )
     }
 
@@ -312,7 +302,6 @@ class ChatController private constructor(
             activeFileContext = fileContext,
             userIntent = intentRecognizer.getUserIntentFromContextMenuCommand(message.command),
             triggerType = message.command.triggerType,
-            projectContextQueryResult = emptyList()
         )
     }
 
@@ -332,9 +321,6 @@ class ChatController private constructor(
         activeFileContext: ActiveFileContext,
         userIntent: UserIntent?,
         triggerType: TriggerType,
-        projectContextQueryResult: List<RelevantDocument>,
-        shouldAddIndexInProgressMessage: Boolean = false,
-        shouldUseWorkspaceContext: Boolean = false,
     ) {
         val credentialState = authController.getAuthNeededStates(context.project).chat
         if (credentialState != null) {
@@ -353,8 +339,8 @@ class ChatController private constructor(
             userIntent = userIntent,
             triggerType = triggerType,
             customization = CodeWhispererModelConfigurator.getInstance().activeCustomization(context.project),
-            relevantTextDocuments = projectContextQueryResult,
-            useRelevantDocuments = shouldUseWorkspaceContext,
+            relevantTextDocuments = emptyList(),
+            useRelevantDocuments = false,
         )
 
         val sessionInfo = getSessionInfo(tabId)
@@ -365,7 +351,7 @@ class ChatController private constructor(
         telemetryHelper.recordStartConversation(tabId, requestData)
         // Send the request to the API and publish the responses back to the UI.
         // This is launched in a scope attached to the sessionInfo so that the Job can be cancelled on a per-session basis.
-        ChatPromptHandler(telemetryHelper).handle(tabId, triggerId, requestData, sessionInfo, shouldAddIndexInProgressMessage)
+        ChatPromptHandler(telemetryHelper).handle(tabId, triggerId, requestData, sessionInfo, shouldAddIndexInProgressMessage = false)
             .catch { handleError(tabId, it) }
             .onEach { context.messagesFromAppToUi.publish(it) }
             .launchIn(sessionInfo.scope)

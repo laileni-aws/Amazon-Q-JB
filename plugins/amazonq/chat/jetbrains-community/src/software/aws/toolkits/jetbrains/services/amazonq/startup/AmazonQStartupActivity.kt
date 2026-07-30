@@ -8,18 +8,13 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.ToolWindowManager
-import software.amazon.q.jetbrains.core.credentials.AwsBearerTokenConnection
-import software.amazon.q.jetbrains.core.credentials.ToolkitConnectionManager
-import software.amazon.q.jetbrains.core.credentials.pinning.QConnection
 import software.amazon.q.jetbrains.core.gettingstarted.emitUserState
-import software.aws.toolkits.jetbrains.services.amazonq.CodeWhispererFeatureConfigService
 import software.aws.toolkits.jetbrains.services.amazonq.lsp.AmazonQLspService
 import software.aws.toolkits.jetbrains.services.amazonq.profile.QRegionProfileManager
 import software.aws.toolkits.jetbrains.services.amazonq.toolwindow.AmazonQToolWindow
 import software.aws.toolkits.jetbrains.services.amazonq.toolwindow.AmazonQToolWindowFactory
 import software.aws.toolkits.jetbrains.services.codewhisperer.explorer.CodeWhispererExplorerActionManager
 import software.aws.toolkits.jetbrains.services.cwc.inline.InlineChatController
-import software.aws.toolkits.jetbrains.settings.CodeWhispererSettings
 import java.util.concurrent.atomic.AtomicBoolean
 
 class AmazonQStartupActivity : ProjectActivity {
@@ -27,12 +22,6 @@ class AmazonQStartupActivity : ProjectActivity {
 
     override suspend fun execute(project: Project) {
         if (ApplicationManager.getApplication().isUnitTestMode) return
-
-        ToolkitConnectionManager.getInstance(project).activeConnectionForFeature(QConnection.getInstance())?.let {
-            if (it is AwsBearerTokenConnection && CodeWhispererFeatureConfigService.getInstance().getChatWSContext()) {
-                CodeWhispererSettings.getInstance().toggleProjectContextEnabled(value = true, passive = true)
-            }
-        }
 
         // initialize html contents in BGT so users don't have to wait when they open the tool window
         AmazonQToolWindow.getInstance(project)
